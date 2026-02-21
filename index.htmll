@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Penguen Flappy</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #4ec0ca; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Arial', sans-serif; touch-action: manipulation; }
+        canvas { border: 4px solid #fff; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 100%; max-height: 100%; }
+    </style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = 360; canvas.height = 540;
+let bird = { x: 60, y: 200, radius: 18, gravity: 0.5, lift: -8, velocity: 0 };
+let pipes = []; let frame = 0; let score = 0; let gameOver = false;
+function drawPenguin() { ctx.font = "40px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("🐧", bird.x, bird.y); }
+function drawPipe(p) {
+    let g = ctx.createLinearGradient(p.x, 0, p.x + 50, 0);
+    g.addColorStop(0, "#2e7d32"); g.addColorStop(0.5, "#81c784"); g.addColorStop(1, "#1b5e20");
+    ctx.fillStyle = g; ctx.fillRect(p.x, 0, 50, p.top); ctx.fillRect(p.x, p.bottom, 50, canvas.height);
+    ctx.fillStyle = "#1b5e20"; ctx.fillRect(p.x-5, p.top-20, 60, 20); ctx.fillRect(p.x-5, p.bottom, 60, 20);
+}
+function flap() { if (gameOver) resetGame(); else bird.velocity = bird.lift; }
+window.addEventListener("mousedown", flap); window.addEventListener("touchstart", (e) => { e.preventDefault(); flap(); }, {passive: false});
+function resetGame() { bird.y = 200; bird.velocity = 0; pipes = []; score = 0; frame = 0; gameOver = false; draw(); }
+function draw() {
+    if (gameOver) {
+        ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = "white"; ctx.textAlign = "center"; ctx.font = "bold 26px Arial";
+        ctx.fillText("OYUN BİTTİ!", canvas.width/2, canvas.height/2);
+        ctx.font = "18px Arial"; ctx.fillText("Tıkla ve Başla", canvas.width/2, canvas.height/2+40);
+        return;
+    }
+    ctx.fillStyle = "#70c5ce"; ctx.fillRect(0,0,canvas.width,canvas.height);
+    bird.velocity += bird.gravity; bird.y += bird.velocity;
+    if (frame % 100 === 0) {
+        let h = 140; let pos = Math.random() * (canvas.height - h - 150) + 75;
+        pipes.push({ x: canvas.width, top: pos, bottom: pos + h });
+    }
+    for (let i = pipes.length-1; i>=0; i--) {
+        pipes[i].x -= 2.5; drawPipe(pipes[i]);
+        if (bird.x+15 > pipes[i].x && bird.x-15 < pipes[i].x+50) {
+            if (bird.y-15 < pipes[i].top || bird.y+15 > pipes[i].bottom) gameOver = true;
+        }
+        if (pipes[i].x + 2.5 === 60) score++;
+        if (pipes[i].x < -60) pipes.splice(i,1);
+    }
+    drawPenguin();
+    if (bird.y + 18 > canvas.height || bird.y < 0) gameOver = true;
+    ctx.fillStyle = "white"; ctx.font = "bold 25px Arial"; ctx.fillText("Skor: " + score, 20, 40);
+    frame++; requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>
